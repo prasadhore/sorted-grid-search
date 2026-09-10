@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorted Grid Search</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f4f6f8;color:#20242a}
+.container{max-width:950px;margin:40px auto;padding:20px}
+.card{background:#fff;border:1px solid #e1e5e9;border-radius:12px;padding:22px;margin-bottom:18px}
+h1{margin:0 0 8px}.sub{color:#667085;margin-bottom:24px}
+.row{display:flex;gap:12px;align-items:end;flex-wrap:wrap}
+label{display:block;font-weight:bold;font-size:14px;margin-bottom:6px}
+input,textarea,button{font:inherit}
+input{padding:10px;border:1px solid #ccd2d8;border-radius:7px}
+textarea{width:100%;height:150px;margin-top:8px;padding:12px;border:1px solid #ccd2d8;border-radius:7px;font-family:monospace}
+button{padding:10px 16px;border:0;border-radius:7px;background:#20242a;color:white;cursor:pointer}
+button.alt{background:#e9edf1;color:#20242a}
+.help{font-size:13px;color:#667085;margin-top:6px}
+.error{display:none;margin-top:10px;padding:10px;background:#fff0ee;color:#b42318;border-radius:7px}
+.grid{display:grid;gap:4px;margin-top:18px;overflow:auto}
+.cell{min-width:55px;padding:12px 7px;text-align:center;border:1px solid #ddd;border-radius:5px;background:#fafafa}
+.cell.checked{background:#eef3f8}.cell.found{background:#dff5e5;border-color:#49a866;font-weight:bold}
+.path{margin-top:14px;padding:12px;background:#f7f8fa;border-radius:7px;font-family:monospace;word-break:break-word}
+footer{text-align:center;color:#8a919b;font-size:13px}
+</style>
+</head>
+<body>
+<div class="container">
+<div class="card">
+<h1>Sorted Grid Search</h1>
+<div class="sub">Find a target value and its coordinate in a row-wise and column-wise sorted grid.</div>
+
+<div class="row">
+<div><label>Grid size (n × n)</label><input id="n" type="number" min="1" max="20" value="5"></div>
+<div><label>Target value</label><input id="target" type="number" value="42"></div>
+<button class="alt" onclick="example()">Load Example</button>
+<button onclick="search()">Search</button>
+</div>
+
+<div style="margin-top:18px">
+<label>Enter grid values</label>
+<textarea id="matrix">10 20 30 40 50
+15 25 35 45 55
+18 28 38 48 58
+22 32 42 52 62
+26 36 46 56 66</textarea>
+<div class="help">Enter exactly n rows with n numbers in every row.</div>
+<div id="error" class="error"></div>
+</div>
+</div>
+
+<div class="card" id="output"><b>Ready to search.</b></div>
+<footer>DAA Project • O(n) Staircase Search • GitHub Pages</footer>
+</div>
+
+<script>
+function example(){
+document.getElementById("n").value=5;
+document.getElementById("target").value=42;
+document.getElementById("matrix").value=`10 20 30 40 50
+15 25 35 45 55
+18 28 38 48 58
+22 32 42 52 62
+26 36 46 56 66`;
+document.getElementById("error").style.display="none";
+document.getElementById("output").innerHTML="<b>Example loaded. Click Search.</b>";
+}
+
+function getGrid(){
+const n=Number(document.getElementById("n").value);
+if(!Number.isInteger(n)||n<1||n>20) throw Error("Grid size must be between 1 and 20.");
+const lines=document.getElementById("matrix").value.trim().split(/\n+/);
+if(lines.length!==n) throw Error("Please enter exactly "+n+" rows.");
+const g=lines.map((line,i)=>{
+const a=line.trim().split(/\s+/).map(Number);
+if(a.length!==n||a.some(x=>!Number.isFinite(x))) throw Error("Row "+(i+1)+" must contain exactly "+n+" valid numbers.");
+return a;
+});
+for(let i=0;i<n;i++) for(let j=1;j<n;j++) if(g[i][j]<g[i][j-1]) throw Error("Grid is not sorted row-wise.");
+for(let j=0;j<n;j++) for(let i=1;i<n;i++) if(g[i][j]<g[i-1][j]) throw Error("Grid is not sorted column-wise.");
+return [n,g];
+}
+
+function search(){
+const err=document.getElementById("error"), out=document.getElementById("output");
+err.style.display="none";
+try{
+const [n,g]=getGrid(), target=Number(document.getElementById("target").value);
+let r=0,c=n-1,found=null,path=[],checked=[];
+while(r<n&&c>=0){
+path.push(g[r][c]); checked.push([r,c]);
+if(g[r][c]===target){found=[r,c];break;}
+if(g[r][c]>target)c--;else r++;
+}
+let s=found
+?`<b>Target ${target} found at coordinate (${found[0]+1}, ${found[1]+1})</b> (1-based indexing).`
+:`<b>Target ${target} was not found.</b>`;
+s+=`<div class="grid" style="grid-template-columns:repeat(${n},minmax(55px,1fr))">`;
+for(let i=0;i<n;i++)for(let j=0;j<n;j++){
+let cls=found&&found[0]===i&&found[1]===j?"found":checked.some(p=>p[0]===i&&p[1]===j)?"checked":"";
+s+=`<div class="cell ${cls}">${g[i][j]}</div>`;
+}
+s+=`</div><div class="path"><b>Search path:</b> ${path.join(" → ")}</div>`;
+s+=`<p><b>Time Complexity:</b> O(n) &nbsp; | &nbsp; <b>Space Complexity:</b> O(1)</p>`;
+out.innerHTML=s;
+}catch(e){err.textContent=e.message;err.style.display="block";out.innerHTML="<b>Please correct the input.</b>";}
+}
+</script>
+</body>
+</html>
